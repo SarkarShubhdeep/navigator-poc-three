@@ -18,9 +18,10 @@ import { UserFooter } from "./user-footer";
 
 interface SidebarProps {
   isOpen: boolean;
+  onUserUpdate?: () => void;
 }
 
-export function Sidebar({ isOpen }: SidebarProps) {
+export function Sidebar({ isOpen, onUserUpdate }: SidebarProps) {
   const pathname = usePathname();
 
   const isActive = (path: string) => pathname === path;
@@ -177,7 +178,7 @@ export function Sidebar({ isOpen }: SidebarProps) {
 
       {/* Fixed User Footer */}
       <div className="p-4 border-t">
-        <UserFooter />
+        <UserFooter onUserUpdate={onUserUpdate} />
       </div>
     </aside>
   );

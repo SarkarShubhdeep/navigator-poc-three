@@ -2,14 +2,41 @@
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { createClient } from "@/lib/supabase/client";
+import { getUserInitials } from "@/lib/utils/user";
 import { PanelLeft } from "lucide-react";
+import { useEffect, useImperativeHandle, useState } from "react";
 
 interface HeaderProps {
   onToggleSidebar: () => void;
-  sidebarOpen: boolean;
+  refreshRef?: React.MutableRefObject<(() => void) | null>;
 }
 
-export function Header({ onToggleSidebar, sidebarOpen }: HeaderProps) {
+export function Header({ onToggleSidebar, refreshRef }: HeaderProps) {
+  const [userInitials, setUserInitials] = useState("U");
+
+  const loadUserInitials = async () => {
+    const supabase = createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (user) {
+      const fullName = user.user_metadata?.full_name || null;
+      const email = user.email || null;
+      const initials =
+        getUserInitials(fullName) ||
+        (email ? email.substring(0, 2).toUpperCase() : "U");
+      setUserInitials(initials);
+    }
+  };
+
+  useEffect(() => {
+    loadUserInitials();
+  }, []);
+
+  useImperativeHandle(refreshRef, () => loadUserInitials);
+
   return (
     <header className="h-14 border-b bg-background flex items-center justify-between px-4 sticky top-0 z-10">
       <div className="flex items-center gap-2">
@@ -20,7 +47,7 @@ export function Header({ onToggleSidebar, sidebarOpen }: HeaderProps) {
           className="h-9 w-auto px-3 gap-2"
         >
           <PanelLeft className="h-4 w-4" />
-          <span className="text-sm font-medium">SF</span>
+          <span className="text-sm font-medium font-mono">{userInitials}</span>
         </Button>
       </div>
       <div className="flex-1 flex justify-center">
