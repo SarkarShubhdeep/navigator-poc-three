@@ -162,7 +162,7 @@ export function SettingsDialog({
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="max-w-4xl min-h-[600px] overflow-hidden flex flex-col">
+            <DialogContent className="max-w-4xl min-h-[600px] overflow-hidden flex flex-col rounded-2xl border-none">
                 <DialogHeader>
                     <DialogTitle>Settings</DialogTitle>
                     <DialogDescription>

@@ -11,7 +11,7 @@ export function JerryButton() {
         <>
             <button
                 onClick={() => setIsChatOpen(!isChatOpen)}
-                className="fixed bottom-6 right-6 h-14 w-14 rounded-full bg-gradient-to-br from-[#BAFFB7] to-[#0D87C9] flex items-center justify-center z-40"
+                className="fixed bottom-6 right-6 h-14 w-14 rounded-full bg-gradient-to-br from-[#BAFFB7] to-[#0D87C9] flex items-center justify-center z-40 shadow-xl"
                 aria-label="Open Agent Jerry chat"
             >
                 <Image
