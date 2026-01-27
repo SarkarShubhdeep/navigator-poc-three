@@ -15,42 +15,39 @@ export async function GET() {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
-        // Query teams directly - RLS policy will filter to teams user belongs to
-        // The RLS policy checks if user is a member via team_members table
-        const { data: teams, error } = await supabase
-            .from("teams")
-            .select("*")
-            .order("created_at", { ascending: false });
+        // Fetch only teams the current user is a member of (via team_members)
+        const { data: memberships, error: memError } = await supabase
+            .from("team_members")
+            .select("team_id")
+            .eq("user_id", user.id);
 
-        if (error) {
-            console.error("Error fetching teams:", error);
-            console.error("Error details:", JSON.stringify(error, null, 2));
-            
-            // Check for specific RLS errors
-            if (error.code === "42501" || error.message?.includes("permission denied")) {
-                return NextResponse.json(
-                    { 
-                        error: "Permission denied",
-                        details: "RLS policy may be blocking access. Check your RLS policies.",
-                        code: error.code,
-                        hint: error.hint
-                    },
-                    { status: 403 },
-                );
-            }
-            
+        if (memError) {
+            console.error("Error fetching team memberships:", memError);
             return NextResponse.json(
-                { 
-                    error: "Failed to fetch teams",
-                    details: error.message,
-                    code: error.code,
-                    hint: error.hint
-                },
+                { error: "Failed to fetch teams", details: memError.message },
                 { status: 500 },
             );
         }
 
-        // If no teams, return empty array (this is valid - user might not be in any teams)
+        const teamIds = (memberships || []).map((m) => m.team_id);
+        if (teamIds.length === 0) {
+            return NextResponse.json({ teams: [] });
+        }
+
+        const { data: teams, error } = await supabase
+            .from("teams")
+            .select("*")
+            .in("id", teamIds)
+            .order("created_at", { ascending: false });
+
+        if (error) {
+            console.error("Error fetching teams:", error);
+            return NextResponse.json(
+                { error: "Failed to fetch teams", details: error.message },
+                { status: 500 },
+            );
+        }
+
         return NextResponse.json({ teams: teams || [] });
     } catch (error) {
         console.error("Unexpected error:", error);

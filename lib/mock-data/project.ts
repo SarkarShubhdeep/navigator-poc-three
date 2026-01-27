@@ -21,6 +21,18 @@ export interface WorkLog {
   endTime: Date;
   duration: number; // in seconds
   description?: string;
+  ticketTitle?: string; // Optional: ticket title for display in work session context
+}
+
+export interface WorkSession {
+  id: string;
+  userId: string;
+  projectId?: string | null;
+  clockInTime: Date;
+  clockOutTime?: Date | null;
+  totalDuration?: number | null; // in seconds
+  isActive: boolean;
+  workLogs: WorkLog[];
 }
 
 export interface Ticket {
@@ -41,6 +53,7 @@ export interface Project {
   name: string;
   members: ProjectMember[];
   tickets: Ticket[];
+  teamId?: string; // Optional team ID for invite functionality
 }
 
 // Mock current user ID

@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/client";
 import { getUserInitials } from "@/lib/utils/user";
 import { PanelLeft } from "lucide-react";
 import { useEffect, useImperativeHandle, useState } from "react";
+import { useActiveWorkSession } from "@/hooks/use-active-work-session";
 
 interface HeaderProps {
   onToggleSidebar: () => void;
@@ -14,6 +15,7 @@ interface HeaderProps {
 
 export function Header({ onToggleSidebar, refreshRef }: HeaderProps) {
   const [userInitials, setUserInitials] = useState("U");
+  const { isActive, formattedTime } = useActiveWorkSession();
 
   const loadUserInitials = async () => {
     const supabase = createClient();
@@ -59,9 +61,15 @@ export function Header({ onToggleSidebar, refreshRef }: HeaderProps) {
         </div>
       </div>
       <div className="flex items-center gap-2">
-        <Badge variant="secondary" className="text-xs">
-          IDLE
-        </Badge>
+        {isActive && formattedTime ? (
+          <Badge variant="secondary" className="text-xs font-mono">
+            {formattedTime}
+          </Badge>
+        ) : (
+          <Badge variant="secondary" className="text-xs">
+            IDLE
+          </Badge>
+        )}
         <Badge variant="secondary" className="text-xs gap-1.5">
           <span className="h-1.5 w-1.5 rounded-full bg-green-500" />
           ONLINE

@@ -111,6 +111,7 @@ function ProjectNavigatorContent() {
                     name: projectData.name,
                     members: transformedMembers,
                     tickets: transformedTickets,
+                    teamId: projectData.team_id, // Store team_id for invite functionality
                 });
 
                 setTickets(transformedTickets);
@@ -444,6 +445,7 @@ function ProjectNavigatorContent() {
                 projectName={project.name}
                 members={project.members}
                 currentUserId={currentUserId}
+                teamId={project.teamId}
             />
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 flex-1">

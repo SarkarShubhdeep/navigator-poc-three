@@ -66,7 +66,7 @@ export function LiveClock({ projectId, onWorkSessionChange }: LiveClockProps) {
 
         // Initialize immediately
         setCurrentTime(new Date());
-        
+
         const timer = setInterval(() => {
             setCurrentTime(new Date());
         }, 1000);
@@ -136,7 +136,7 @@ export function LiveClock({ projectId, onWorkSessionChange }: LiveClockProps) {
     if (isActive && clockInTime) {
         // Show timer when work session is active
         return (
-            <div className="flex items-center justify-between border border-muted p-6 py-8 rounded-xl bg-muted/50">
+            <div className="flex items-center justify-between border border-destructive/20 p-6 py-8 rounded-xl bg-destructive/10">
                 <div>
                     <div className="text-5xl font-medium font-mono mb-2">
                         {formatElapsedTime(elapsedSeconds)}
@@ -152,7 +152,7 @@ export function LiveClock({ projectId, onWorkSessionChange }: LiveClockProps) {
                         className="bg-black text-white hover:bg-black/90 rounded-full h-16 px-8 font-semibold w-fit dark:bg-white dark:text-black dark:hover:bg-white/90"
                     >
                         Clock Out
-                        <Square className="h-4 w-4 ml-2" />
+                        <Square className="h-4 w-4 ml-2" fill="currentColor" />
                     </Button>
                     <p className="text-sm text-muted-foreground">
                         Click to end your work session
@@ -161,7 +161,6 @@ export function LiveClock({ projectId, onWorkSessionChange }: LiveClockProps) {
             </div>
         );
     }
-
 
     return (
         <div className="flex items-center justify-between border border-muted p-6 py-8 rounded-xl bg-muted/50">

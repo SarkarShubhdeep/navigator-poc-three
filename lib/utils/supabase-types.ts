@@ -2,7 +2,7 @@
  * Type definitions and transformation utilities for Supabase data
  */
 
-import type { Ticket, WorkLog, ProjectMember } from "@/lib/mock-data/project";
+import type { Ticket, WorkLog, ProjectMember, WorkSession } from "@/lib/mock-data/project";
 
 // Supabase database types (snake_case)
 export interface SupabaseWorkLog {
@@ -102,5 +102,44 @@ export function transformProjectMember(
         fullName: member.full_name || undefined,
         email: member.email,
         isOnline: member.is_online,
+    };
+}
+
+/**
+ * Transform Supabase work session to app work session
+ */
+export function transformWorkSession(session: any): WorkSession {
+    return {
+        id: session.id,
+        userId: session.user_id,
+        projectId: session.project_id || undefined,
+        clockInTime: new Date(session.clock_in_time),
+        clockOutTime: session.clock_out_time
+            ? new Date(session.clock_out_time)
+            : undefined,
+        totalDuration: session.total_duration || undefined,
+        isActive: session.is_active,
+        workLogs: (session.work_logs || []).map((log: any) => {
+            // Handle nested tickets data (could be object or array)
+            let ticketTitle: string | undefined;
+            if (log.tickets) {
+                if (Array.isArray(log.tickets) && log.tickets.length > 0) {
+                    ticketTitle = log.tickets[0].title;
+                } else if (typeof log.tickets === "object" && "title" in log.tickets) {
+                    ticketTitle = log.tickets.title;
+                }
+            }
+
+            return {
+                id: log.id,
+                ticketId: log.ticket_id,
+                userId: log.user_id,
+                startTime: new Date(log.start_time),
+                endTime: log.end_time ? new Date(log.end_time) : new Date(),
+                duration: log.duration || 0,
+                description: log.description || undefined,
+                ticketTitle,
+            };
+        }),
     };
 }

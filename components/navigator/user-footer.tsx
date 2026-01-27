@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { SettingsDialog } from "@/components/navigator/settings-dialog";
 import { createClient } from "@/lib/supabase/client";
+import { clearAllCache } from "@/lib/utils/cache";
 import { getDisplayName, getUserInitials } from "@/lib/utils/user";
 import { ChevronsUpDown, LogOut, Moon, Settings, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
@@ -63,6 +64,7 @@ export function UserFooter({ onUserUpdate }: UserFooterProps) {
   };
 
   const handleLogout = async () => {
+    clearAllCache();
     const supabase = createClient();
     await supabase.auth.signOut();
     router.push("/auth/login");

@@ -5,20 +5,30 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
     Sheet,
+    SheetClose,
     SheetContent,
     SheetHeader,
     SheetTitle,
 } from "@/components/ui/sheet";
-import { MessageCircle, Send, Users } from "lucide-react";
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle,
+} from "@/components/ui/dialog";
+import { MessageCircle, Send, Users, UserPlus, Copy, Check, X } from "lucide-react";
 import { getUserInitials } from "@/lib/utils/user";
 import type { ProjectMember } from "@/lib/mock-data/project";
 import { useState } from "react";
+import { Badge } from "@/components/ui/badge";
 
 interface TeamDrawerProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
     members: ProjectMember[];
     currentUserId: string;
+    teamId?: string; // Optional team ID to fetch invite code
 }
 
 interface ChatMessage {
@@ -33,11 +43,15 @@ export function TeamDrawer({
     onOpenChange,
     members,
     currentUserId,
+    teamId,
 }: TeamDrawerProps) {
     const [message, setMessage] = useState("");
     const [messages, setMessages] = useState<ChatMessage[]>([]);
+    const [isInviteDialogOpen, setIsInviteDialogOpen] = useState(false);
+    const [inviteCode, setInviteCode] = useState<string | null>(null);
+    const [loadingInviteCode, setLoadingInviteCode] = useState(false);
+    const [copied, setCopied] = useState(false);
 
-    const currentUser = members.find((m) => m.userId === currentUserId);
     const sortedMembers = [...members].sort((a, b) => {
         // Current user first, then online users, then offline
         if (a.userId === currentUserId) return -1;
@@ -73,14 +87,110 @@ export function TeamDrawer({
         return member.fullName || member.email;
     };
 
+    const fetchInviteCode = async () => {
+        if (!teamId) {
+            console.warn("fetchInviteCode called but teamId is not provided");
+            return;
+        }
+
+        setLoadingInviteCode(true);
+        try {
+            console.log("Fetching invite code for team:", teamId);
+            const response = await fetch(`/api/teams/${teamId}`);
+            
+            if (!response.ok) {
+                // Try to get error details from response
+                let errorMessage = "Failed to fetch team";
+                try {
+                    const errorData = await response.json() as {
+                        details?: string;
+                        error?: string;
+                        code?: string;
+                        hint?: string;
+                    };
+                    errorMessage = errorData.details || errorData.error || errorMessage;
+                    console.error("Team fetch error:", {
+                        status: response.status,
+                        statusText: response.statusText,
+                        error: errorData,
+                    });
+                } catch {
+                    errorMessage = response.statusText || errorMessage;
+                    console.error("Team fetch error (no JSON):", {
+                        status: response.status,
+                        statusText: response.statusText,
+                    });
+                }
+                throw new Error(errorMessage);
+            }
+            
+            const data = await response.json();
+            console.log("Team data received:", data);
+            setInviteCode(data.team?.invite_code || null);
+        } catch (error) {
+            console.error("Error fetching invite code:", error);
+            // Set error state to show in UI
+            setInviteCode(null);
+        } finally {
+            setLoadingInviteCode(false);
+        }
+    };
+
+    const handleInviteClick = () => {
+        if (!teamId) {
+            console.error("Cannot fetch invite code: teamId is not provided");
+            alert("Team ID is missing. Cannot fetch invite code.");
+            return;
+        }
+        setIsInviteDialogOpen(true);
+        // Always fetch invite code when dialog opens to ensure we have the latest
+        fetchInviteCode();
+    };
+
+    const handleCopyCode = async () => {
+        if (!inviteCode) return;
+
+        try {
+            await navigator.clipboard.writeText(inviteCode);
+            setCopied(true);
+            setTimeout(() => setCopied(false), 2000);
+        } catch (error) {
+            console.error("Failed to copy:", error);
+        }
+    };
+
     return (
-        <Sheet open={open} onOpenChange={onOpenChange}>
+        <Sheet open={open} onOpenChange={onOpenChange} >
             <SheetContent className="w-full sm:max-w-lg flex flex-col p-0">
                 <SheetHeader className="px-6 pt-6 pb-4">
-                    <SheetTitle className="flex items-center gap-2">
-                        <Users className="h-5 w-5" />
-                        Team Members
-                    </SheetTitle>
+                    <div className="flex items-center justify-between">
+                        <SheetTitle className="flex items-center gap-2">
+                            <Users className="h-5 w-5" />
+                            Team Members
+                        </SheetTitle>
+                        <div className="flex items-center gap-2">
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={handleInviteClick}
+                                className="rounded-full"
+                                disabled={!teamId}
+                            >
+                                <UserPlus className="h-4 w-4 mr-2" />
+                                Invite
+                            </Button>
+                            <SheetClose asChild>
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-8 w-8"
+                                >
+                                    <X className="h-4 w-4" />
+                                    <span className="sr-only">Close</span>
+                                </Button>
+                            </SheetClose>
+                        </div>
+                    </div>
                 </SheetHeader>
 
                 <div className="flex-1 flex flex-col min-h-0">
@@ -243,6 +353,71 @@ export function TeamDrawer({
                     </div>
                 </div>
             </SheetContent>
+
+            {/* Invite Code Dialog */}
+            <Dialog open={isInviteDialogOpen} onOpenChange={setIsInviteDialogOpen}>
+                <DialogContent className="sm:max-w-[425px]">
+                    <DialogHeader>
+                        <DialogTitle>Invite Team Members</DialogTitle>
+                        <DialogDescription>
+                            Share this code with others to invite them to join
+                            your team.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="py-4">
+                        {loadingInviteCode ? (
+                            <div className="flex items-center justify-center py-8">
+                                <p className="text-muted-foreground">
+                                    Loading invite code...
+                                </p>
+                            </div>
+                        ) : inviteCode ? (
+                            <div className="space-y-4">
+                                <div className="flex items-center justify-center">
+                                    <Badge
+                                        variant="secondary"
+                                        className="text-2xl font-mono font-bold px-6 py-3 tracking-wider"
+                                    >
+                                        {inviteCode}
+                                    </Badge>
+                                </div>
+                                <Button
+                                    onClick={handleCopyCode}
+                                    className="w-full"
+                                    variant={copied ? "default" : "outline"}
+                                >
+                                    {copied ? (
+                                        <>
+                                            <Check className="h-4 w-4 mr-2" />
+                                            Copied!
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Copy className="h-4 w-4 mr-2" />
+                                            Copy Code
+                                        </>
+                                    )}
+                                </Button>
+                            </div>
+                        ) : (
+                            <div className="flex flex-col items-center justify-center py-8 space-y-2">
+                                <p className="text-muted-foreground text-center">
+                                    Failed to load invite code
+                                </p>
+                                {teamId && (
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={fetchInviteCode}
+                                    >
+                                        Retry
+                                    </Button>
+                                )}
+                            </div>
+                        )}
+                    </div>
+                </DialogContent>
+            </Dialog>
         </Sheet>
     );
 }

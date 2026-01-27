@@ -14,11 +14,13 @@ import {
 } from "@/components/ui/select";
 import {
     Sheet,
+    SheetClose,
     SheetContent,
     SheetHeader,
     SheetTitle,
 } from "@/components/ui/sheet";
 import { getUserInitials } from "@/lib/utils/user";
+import { X } from "lucide-react";
 import type {
     ProjectMember,
     TicketPriority,
@@ -116,9 +118,21 @@ export function CreateTicketDrawer({
         <Sheet open={open} onOpenChange={onOpenChange}>
             <SheetContent className="w-full sm:max-w-lg overflow-y-auto">
                 <SheetHeader>
-                    <SheetTitle className="text-lg font-semibold">
-                        Create New Ticket
-                    </SheetTitle>
+                    <div className="flex items-center justify-between">
+                        <SheetTitle className="text-lg font-semibold">
+                            Create New Ticket
+                        </SheetTitle>
+                        <SheetClose asChild>
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8"
+                            >
+                                <X className="h-4 w-4" />
+                                <span className="sr-only">Close</span>
+                            </Button>
+                        </SheetClose>
+                    </div>
                 </SheetHeader>
 
                 <div className="mt-6 space-y-4">

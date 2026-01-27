@@ -13,11 +13,13 @@ import {
 } from "@/components/ui/select";
 import {
     Sheet,
+    SheetClose,
     SheetContent,
     SheetHeader,
     SheetTitle,
 } from "@/components/ui/sheet";
-import { Briefcase } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Briefcase, X } from "lucide-react";
 import { getUserInitials } from "@/lib/utils/user";
 import { formatDateTimeRange, formatDurationHuman } from "@/lib/utils/time";
 import type {
@@ -26,14 +28,14 @@ import type {
     TicketStatus,
     TicketPriority,
 } from "@/lib/mock-data/project";
-import React, { useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 
 interface TicketDrawerProps {
     ticket: Ticket | null;
     open: boolean;
     onOpenChange: (open: boolean) => void;
     members: ProjectMember[];
-    currentUserId: string;
+    currentUserId: string | null;
     onUpdate?: (ticket: Ticket) => void;
 }
 
@@ -50,16 +52,35 @@ export function TicketDrawer({
     const [editedTitle, setEditedTitle] = useState("");
 
     // Update local ticket when prop changes
-    React.useEffect(() => {
+    useEffect(() => {
         setLocalTicket(ticket);
         setEditedTitle(ticket?.title || "");
     }, [ticket]);
 
-    if (!ticket || !localTicket) return null;
+    // Assign to dropdown: always include current user (self) even if not in project_members
+    const assignableMembers = useMemo(() => {
+        const hasCurrentUser = currentUserId && members.some((m) => m.userId === currentUserId);
+        if (hasCurrentUser) return members;
+        if (!currentUserId) return members;
+        return [
+            { userId: currentUserId, fullName: "Me", email: "", isOnline: false },
+            ...members,
+        ];
+    }, [members, currentUserId]);
 
-    const assignedMember = members.find(
-        (m) => m.userId === localTicket.assignedToUserId,
-    );
+    const assignedMember = localTicket
+        ? assignableMembers.find((m) => m.userId === localTicket.assignedToUserId)
+        : null;
+
+    if (!ticket || !localTicket) {
+        return (
+            <Sheet open={open} onOpenChange={onOpenChange}>
+                <SheetContent className="w-full sm:max-w-lg overflow-y-auto">
+                    {/* Empty state - hooks are still called */}
+                </SheetContent>
+            </Sheet>
+        );
+    }
 
     const handleStatusChange = (newStatus: string) => {
         const updated = { ...localTicket, status: newStatus as TicketStatus };
@@ -130,36 +151,48 @@ export function TicketDrawer({
         <Sheet open={open} onOpenChange={onOpenChange}>
             <SheetContent className="w-full sm:max-w-lg overflow-y-auto">
                 <SheetHeader>
-                    <SheetTitle className="flex items-center gap-2">
-                        {isEditingTitle ? (
-                            <div className="flex items-center gap-2 flex-1">
-                                <Input
-                                    value={editedTitle}
-                                    onChange={(e) =>
-                                        setEditedTitle(e.target.value)
-                                    }
-                                    onKeyDown={(e) => {
-                                        if (e.key === "Enter") {
-                                            handleTitleSave();
-                                        } else if (e.key === "Escape") {
-                                            handleTitleCancel();
+                    <div className="flex items-center justify-between gap-2">
+                        <SheetTitle className="flex items-center gap-2 flex-1 min-w-0">
+                            {isEditingTitle ? (
+                                <div className="flex items-center gap-2 flex-1">
+                                    <Input
+                                        value={editedTitle}
+                                        onChange={(e) =>
+                                            setEditedTitle(e.target.value)
                                         }
-                                    }}
-                                    className="flex-1 text-lg font-semibold border-0 p-0 focus-visible:ring-0 focus-visible:ring-offset-0 h-auto"
-                                    autoFocus
-                                />
-                            </div>
-                        ) : (
-                            <div className="flex items-center gap-2 flex-1">
-                                <span
-                                    className="flex text-lg font-semibold cursor-pointer"
-                                    onClick={handleTitleEdit}
-                                >
-                                    {localTicket.title}
-                                </span>
-                            </div>
-                        )}
-                    </SheetTitle>
+                                        onKeyDown={(e) => {
+                                            if (e.key === "Enter") {
+                                                handleTitleSave();
+                                            } else if (e.key === "Escape") {
+                                                handleTitleCancel();
+                                            }
+                                        }}
+                                        className="flex-1 text-lg font-semibold border-0 p-0 focus-visible:ring-0 focus-visible:ring-offset-0 h-auto"
+                                        autoFocus
+                                    />
+                                </div>
+                            ) : (
+                                <div className="flex items-center gap-2 flex-1">
+                                    <span
+                                        className="flex text-lg font-semibold cursor-pointer"
+                                        onClick={handleTitleEdit}
+                                    >
+                                        {localTicket.title}
+                                    </span>
+                                </div>
+                            )}
+                        </SheetTitle>
+                        <SheetClose asChild>
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 shrink-0"
+                            >
+                                <X className="h-4 w-4" />
+                                <span className="sr-only">Close</span>
+                            </Button>
+                        </SheetClose>
+                    </div>
                 </SheetHeader>
 
                 <div className="mt-6 space-y-4">
@@ -202,7 +235,7 @@ export function TicketDrawer({
                                 </SelectValue>
                             </SelectTrigger>
                             <SelectContent>
-                                {members.map((member) => (
+                                {assignableMembers.map((member) => (
                                     <SelectItem
                                         key={member.userId}
                                         value={member.userId}
@@ -213,16 +246,17 @@ export function TicketDrawer({
                                                     {getUserInitials(
                                                         member.fullName,
                                                     ) ||
-                                                        member.email
-                                                            .substring(0, 2)
-                                                            .toUpperCase()}
+                                                        (member.email
+                                                            ? member.email.substring(0, 2).toUpperCase()
+                                                            : "Me")}
                                                 </AvatarFallback>
                                             </Avatar>
                                             <span>
                                                 {member.userId === currentUserId
                                                     ? "Me"
                                                     : member.fullName ||
-                                                      member.email}
+                                                      member.email ||
+                                                      "Me"}
                                             </span>
                                         </div>
                                     </SelectItem>

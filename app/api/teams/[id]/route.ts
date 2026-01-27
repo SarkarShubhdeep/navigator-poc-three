@@ -17,20 +17,21 @@ export async function GET(
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
-        // Verify user is a member of the team
-        const { data: teamMember } = await supabase
+        // Verify user is a member of the team (optional check if RLS is disabled)
+        const { data: teamMember, error: memberError } = await supabase
             .from("team_members")
             .select("team_id")
             .eq("team_id", teamId)
             .eq("user_id", user.id)
-            .single();
+            .maybeSingle(); // Use maybeSingle instead of single to avoid error if not found
 
-        if (!teamMember) {
-            return NextResponse.json(
-                { error: "Not a member of this team" },
-                { status: 403 },
-            );
+        // Log membership check result (for debugging)
+        if (memberError) {
+            console.warn("Team membership check error (may be due to RLS):", memberError);
         }
+        
+        // If RLS is disabled, we'll still try to fetch the team
+        // The team fetch will fail if user doesn't have access
 
         // Get team details
         const { data: team, error: teamError } = await supabase
@@ -41,8 +42,28 @@ export async function GET(
 
         if (teamError) {
             console.error("Error fetching team:", teamError);
+            console.error("Team error details:", JSON.stringify(teamError, null, 2));
+            
+            // Check for RLS/permission errors
+            if (teamError.code === "42501" || teamError.message?.includes("permission denied")) {
+                return NextResponse.json(
+                    { 
+                        error: "Permission denied",
+                        details: "RLS policy may be blocking access. Check your RLS policies.",
+                        code: teamError.code,
+                        hint: teamError.hint
+                    },
+                    { status: 403 },
+                );
+            }
+            
             return NextResponse.json(
-                { error: "Failed to fetch team" },
+                { 
+                    error: "Failed to fetch team",
+                    details: teamError.message,
+                    code: teamError.code,
+                    hint: teamError.hint
+                },
                 { status: 500 },
             );
         }

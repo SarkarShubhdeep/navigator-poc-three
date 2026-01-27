@@ -115,6 +115,35 @@ export async function GET(
             }
         }
 
+        // Merge in team members who are not yet in project_members, so newly joined
+        // team members appear in assign-to, ticket avatars, and team drawer
+        const projectMemberUserIds = new Set(
+            (finalMembers as { user_id: string }[]).map((m) => m.user_id),
+        );
+        if (project.team_id) {
+            const { data: teamMembers, error: tmError } = await supabase
+                .from("team_members")
+                .select("id, user_id, full_name, email, joined_at")
+                .eq("team_id", project.team_id);
+
+            if (!tmError && teamMembers?.length) {
+                for (const tm of teamMembers) {
+                    if (projectMemberUserIds.has(tm.user_id)) continue;
+                    projectMemberUserIds.add(tm.user_id);
+                    finalMembers.push({
+                        id: `tm-${tm.user_id}`,
+                        project_id: project.id,
+                        user_id: tm.user_id,
+                        role: "member",
+                        is_online: false,
+                        joined_at: tm.joined_at ?? project.created_at,
+                        full_name: tm.full_name ?? null,
+                        email: tm.email ?? "",
+                    });
+                }
+            }
+        }
+
         return NextResponse.json({
             project: {
                 ...project,

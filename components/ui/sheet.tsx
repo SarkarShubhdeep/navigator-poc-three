@@ -2,10 +2,8 @@
 
 import * as React from "react";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
-import { X } from "lucide-react";
 
 import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
 
 const Sheet = DialogPrimitive.Root;
 
@@ -59,16 +57,6 @@ const SheetContent = React.forwardRef<
             {...props}
         >
             {children}
-            <DialogPrimitive.Close asChild>
-                <Button
-                    variant="ghost"
-                    size="icon"
-                    className="absolute right-4 top-4 h-8 w-8"
-                >
-                    <X className="h-4 w-4" />
-                    <span className="sr-only">Close</span>
-                </Button>
-            </DialogPrimitive.Close>
         </DialogPrimitive.Content>
     </SheetPortal>
 ));

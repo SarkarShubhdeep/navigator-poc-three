@@ -12,6 +12,7 @@ interface ProjectHeaderProps {
     projectName: string;
     members: ProjectMember[];
     currentUserId: string;
+    teamId?: string; // Optional team ID for invite functionality
     onSettingsClick?: () => void;
     onNotificationsClick?: () => void;
 }
@@ -20,6 +21,7 @@ export function ProjectHeader({
     projectName,
     members,
     currentUserId,
+    teamId,
     onSettingsClick,
     onNotificationsClick,
 }: ProjectHeaderProps) {
@@ -90,6 +92,7 @@ export function ProjectHeader({
                 onOpenChange={setIsTeamDrawerOpen}
                 members={members}
                 currentUserId={currentUserId}
+                teamId={teamId}
             />
         </div>
     );

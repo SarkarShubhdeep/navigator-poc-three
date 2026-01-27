@@ -127,23 +127,29 @@ export function TicketItem({
                     )}
 
                     <div className="flex items-center gap-3 text-sm text-muted-foreground">
-                        {assignedMember && (
+                        {(assignedMember || ticket.assignedToUserId) && (
                             <div className="flex items-center gap-2">
                                 <Avatar className="h-6 w-6">
                                     <AvatarFallback className="bg-muted text-xs font-mono">
-                                        {getUserInitials(
-                                            assignedMember.fullName,
-                                        ) ||
-                                            assignedMember.email
-                                                .substring(0, 2)
-                                                .toUpperCase()}
+                                        {assignedMember
+                                            ? getUserInitials(
+                                                  assignedMember.fullName,
+                                              ) ||
+                                              assignedMember.email
+                                                  .substring(0, 2)
+                                                  .toUpperCase()
+                                            : ticket.assignedToUserId
+                                                  .slice(0, 2)
+                                                  .toUpperCase() || "?"}
                                     </AvatarFallback>
                                 </Avatar>
                                 <span>
                                     {isAssignedToMe
                                         ? "Me"
-                                        : assignedMember.fullName ||
-                                          assignedMember.email}
+                                        : assignedMember
+                                          ? assignedMember.fullName ||
+                                            assignedMember.email
+                                          : "Unknown"}
                                 </span>
                             </div>
                         )}
@@ -162,7 +168,7 @@ export function TicketItem({
                         <Button
                             size="icon"
                             variant="outline"
-                            className="h-9 w-9"
+                            className="h-9 w-9 rounded-full"
                             onClick={handlePauseClick}
                         >
                             <Pause className="h-4 w-4" fill="currentColor" />
@@ -173,10 +179,10 @@ export function TicketItem({
                             <Button
                                 size="icon"
                                 variant="outline"
-                                className="h-9 w-9"
+                                className="h-9 w-9 rounded-full"
                                 onClick={handleStartClick}
                             >
-                                <Play className="h-4 w-4" />
+                                <Play className="h-4 w-4" fill="currentColor" />
                             </Button>
                         )
                     )}
