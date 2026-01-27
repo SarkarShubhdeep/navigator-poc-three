@@ -12,19 +12,37 @@ export default function CreateTeamPage() {
     const router = useRouter();
     const [teamName, setTeamName] = useState("");
 
-    const handleCreate = () => {
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+
+    const handleCreate = async () => {
         if (!teamName.trim()) return;
 
-        // TODO: Implement team creation logic
-        // This will:
-        // 1. Create a new team/project in the database
-        // 2. Generate a 6-character team code
-        // 3. Add current user as owner
-        // 4. Redirect to the new team's project page
+        setLoading(true);
+        setError(null);
 
-        console.log("Creating team:", teamName);
-        // For now, just redirect back
-        router.push("/navigator/personal");
+        try {
+            const response = await fetch("/api/teams", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ name: teamName.trim() }),
+            });
+
+            if (!response.ok) {
+                const data = await response.json();
+                throw new Error(data.error || "Failed to create team");
+            }
+
+            const data = await response.json();
+            // Redirect to personal page (teams list will show the new team)
+            // The sidebar will automatically refresh teams
+            router.push("/navigator/personal");
+        } catch (err) {
+            setError(
+                err instanceof Error ? err.message : "Failed to create team",
+            );
+            setLoading(false);
+        }
     };
 
     return (
@@ -64,13 +82,17 @@ export default function CreateTeamPage() {
                         />
                     </div>
 
+                    {error && (
+                        <p className="text-sm text-destructive">{error}</p>
+                    )}
+
                     <Button
                         onClick={handleCreate}
-                        disabled={!teamName.trim()}
+                        disabled={!teamName.trim() || loading}
                         className="w-full"
                         size="lg"
                     >
-                        Create Team
+                        {loading ? "Creating..." : "Create Team"}
                     </Button>
                 </div>
             </div>

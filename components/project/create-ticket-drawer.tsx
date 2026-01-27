@@ -22,7 +22,6 @@ import { getUserInitials } from "@/lib/utils/user";
 import type {
     ProjectMember,
     TicketPriority,
-    TicketStatus,
 } from "@/lib/mock-data/project";
 import { useState, useEffect } from "react";
 
@@ -46,9 +45,12 @@ export function CreateTicketDrawer({
     onOpenChange,
     members,
     currentUserId,
-    projectId,
+    projectId, // Required prop for type safety, used by parent component
     onCreate,
 }: CreateTicketDrawerProps) {
+    // projectId is required by the interface but not used in this component
+    // since tickets are always created for the current project context
+    void projectId;
     const [title, setTitle] = useState("");
     const [description, setDescription] = useState("");
     const [priority, setPriority] = useState<TicketPriority>("medium");
@@ -335,7 +337,10 @@ export function CreateTicketDrawer({
                         >
                             Cancel
                         </Button>
-                        <Button onClick={handleSubmit} disabled={!title.trim()}>
+                        <Button 
+                            onClick={handleSubmit} 
+                            disabled={!title.trim()}
+                        >
                             Create Ticket
                         </Button>
                     </div>

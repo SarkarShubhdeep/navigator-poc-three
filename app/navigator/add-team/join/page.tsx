@@ -12,19 +12,36 @@ export default function JoinTeamPage() {
     const router = useRouter();
     const [inviteCode, setInviteCode] = useState("");
 
-    const handleJoin = () => {
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+
+    const handleJoin = async () => {
         if (!inviteCode.trim() || inviteCode.length !== 6) return;
 
-        // TODO: Implement team joining logic
-        // This will:
-        // 1. Validate the 6-character invite code
-        // 2. Find the team/project associated with the code
-        // 3. Add current user as a member to the team
-        // 4. Redirect to the team's project page
+        setLoading(true);
+        setError(null);
 
-        console.log("Joining team with code:", inviteCode);
-        // For now, just redirect back
-        router.push("/navigator/personal");
+        try {
+            const response = await fetch("/api/teams/join", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ inviteCode: inviteCode.trim() }),
+            });
+
+            if (!response.ok) {
+                const data = await response.json();
+                throw new Error(data.error || "Failed to join team");
+            }
+
+            // Redirect to personal page (teams list will show the new team)
+            // The sidebar will automatically refresh teams
+            router.push("/navigator/personal");
+        } catch (err) {
+            setError(
+                err instanceof Error ? err.message : "Failed to join team",
+            );
+            setLoading(false);
+        }
     };
 
     const handleCodeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -72,13 +89,17 @@ export default function JoinTeamPage() {
                         />
                     </div>
 
+                    {error && (
+                        <p className="text-sm text-destructive">{error}</p>
+                    )}
+
                     <Button
                         onClick={handleJoin}
-                        disabled={inviteCode.length !== 6}
+                        disabled={inviteCode.length !== 6 || loading}
                         className="w-full"
                         size="lg"
                     >
-                        Continue
+                        {loading ? "Joining..." : "Continue"}
                     </Button>
                 </div>
             </div>

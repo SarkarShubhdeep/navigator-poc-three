@@ -12,7 +12,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useState, useEffect } from "react";
-import { KbdGroup, Kbd } from "@/components/ui/kbd";
+import { Video } from "lucide-react";
 
 interface WorkLogDialogProps {
     open: boolean;
@@ -94,7 +94,7 @@ export function WorkLogDialog({
                 <DialogHeader>
                     <DialogTitle>Log Work Session</DialogTitle>
                     <DialogDescription>
-                        You've worked for {formatDuration(currentDuration)}. Add
+                        You&apos;ve worked for {formatDuration(currentDuration)}. Add
                         a description of what you accomplished.
                     </DialogDescription>
                 </DialogHeader>
@@ -109,6 +109,20 @@ export function WorkLogDialog({
                             className="min-h-[100px]"
                             autoFocus
                         />
+                    </div>
+                    <div className="space-y-2">
+                        <Button
+                            type="button"
+                            variant="outline"
+                            className="w-full justify-start"
+                            onClick={() => {
+                                // Placeholder for video recording functionality
+                                console.log("Record video summary clicked");
+                            }}
+                        >
+                            <Video className="mr-2 h-4 w-4" />
+                            Record Video Summary
+                        </Button>
                     </div>
                 </div>
                 <DialogFooter className="flex-col sm:flex-row gap-2">

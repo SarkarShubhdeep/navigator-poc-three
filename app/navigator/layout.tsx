@@ -3,7 +3,7 @@
 import { Header } from "@/components/navigator/header";
 import { JerryButton } from "@/components/navigator/jerry-button";
 import { Sidebar } from "@/components/navigator/sidebar";
-import { useRef, useState } from "react";
+import { useRef, useState, Suspense } from "react";
 
 export default function NavigatorLayout({
   children,
@@ -20,7 +20,9 @@ export default function NavigatorLayout({
 
   return (
     <div className="flex h-screen overflow-hidden">
-      <Sidebar isOpen={sidebarOpen} onUserUpdate={handleUserUpdate} />
+      <Suspense fallback={<div className={`h-screen border-r bg-background ${sidebarOpen ? "w-64" : "w-0 overflow-hidden"}`} />}>
+        <Sidebar isOpen={sidebarOpen} onUserUpdate={handleUserUpdate} />
+      </Suspense>
       <div className="flex-1 flex flex-col overflow-hidden">
         <Header
           onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}

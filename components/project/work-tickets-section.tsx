@@ -81,10 +81,11 @@ export function WorkTicketsSection({
                         )}
                     </Button>
                     <Button
-                        onClick={onCreateTicket}
+                        onClick={() => onCreateTicket?.()}
                         size="sm"
                         variant="secondary"
                         className="rounded-full border border-border/50"
+                        disabled={!onCreateTicket}
                     >
                         Create a new ticket
                         <Plus className="h-4 w-4" />
