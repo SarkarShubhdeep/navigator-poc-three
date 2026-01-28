@@ -7,6 +7,7 @@ import { TicketItem } from "./ticket-item";
 import type { Ticket, ProjectMember } from "@/lib/mock-data/project";
 import { useState } from "react";
 import { Badge } from "../ui/badge";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface WorkTicketsSectionProps {
     tickets: Ticket[];
@@ -47,8 +48,8 @@ export function WorkTicketsSection({
     });
 
     return (
-        <div className="border border-muted p-2 py-6 rounded-xl bg-muted/50">
-            <div className="flex items-center justify-between px-4 pb-6">
+        <div className="border border-muted rounded-xl bg-muted/50 flex flex-col h-full min-h-0">
+            <div className="flex items-center justify-between px-4 py-6 flex-shrink-0">
                 <div className="flex items-center gap-2">
                     <h2 className="text-xl font-semibold">Work tickets </h2>
                     <Badge className="text-sm font-semibold font-mono rounded-full">
@@ -93,32 +94,34 @@ export function WorkTicketsSection({
                 </div>
             </div>
 
-            <div className="space-y-2">
-                {filteredTickets.length === 0 ? (
-                    <p className="text-center text-muted-foreground py-8">
-                        No tickets found.
-                    </p>
-                ) : (
-                    filteredTickets.map((ticket) => {
-                        const assignedMember = members.find(
-                            (m) => m.userId === ticket.assignedToUserId,
-                        );
-                        return (
-                            <TicketItem
-                                key={ticket.id}
-                                ticket={ticket}
-                                assignedMember={assignedMember}
-                                currentUserId={currentUserId}
-                                onTicketClick={onTicketClick}
-                                onStatusChange={onStatusChange}
-                                onStartTicket={onStartTicket}
-                                onPauseTicket={onPauseTicket}
-                                activeTicketId={activeTicketId}
-                            />
-                        );
-                    })
-                )}
-            </div>
+            <ScrollArea className="flex-1 px-2 pb-6 min-h-0">
+                <div className="space-y-2">
+                    {filteredTickets.length === 0 ? (
+                        <p className="text-center text-muted-foreground py-8">
+                            No tickets found.
+                        </p>
+                    ) : (
+                        filteredTickets.map((ticket) => {
+                            const assignedMember = members.find(
+                                (m) => m.userId === ticket.assignedToUserId,
+                            );
+                            return (
+                                <TicketItem
+                                    key={ticket.id}
+                                    ticket={ticket}
+                                    assignedMember={assignedMember}
+                                    currentUserId={currentUserId}
+                                    onTicketClick={onTicketClick}
+                                    onStatusChange={onStatusChange}
+                                    onStartTicket={onStartTicket}
+                                    onPauseTicket={onPauseTicket}
+                                    activeTicketId={activeTicketId}
+                                />
+                            );
+                        })
+                    )}
+                </div>
+            </ScrollArea>
         </div>
     );
 }
