@@ -108,38 +108,47 @@ export function transformProjectMember(
 /**
  * Transform Supabase work session to app work session
  */
-export function transformWorkSession(session: any): WorkSession {
+export function transformWorkSession(session: Record<string, unknown>): WorkSession {
     return {
-        id: session.id,
-        userId: session.user_id,
-        projectId: session.project_id || undefined,
-        clockInTime: new Date(session.clock_in_time),
+        id: String(session.id),
+        userId: String(session.user_id),
+        projectId: session.project_id ? String(session.project_id) : undefined,
+        clockInTime: new Date(String(session.clock_in_time)),
         clockOutTime: session.clock_out_time
-            ? new Date(session.clock_out_time)
+            ? new Date(String(session.clock_out_time))
             : undefined,
-        totalDuration: session.total_duration || undefined,
-        isActive: session.is_active,
-        workLogs: (session.work_logs || []).map((log: any) => {
+        totalDuration:
+            typeof session.total_duration === "number"
+                ? session.total_duration
+                : undefined,
+        isActive: Boolean(session.is_active),
+        workLogs: (Array.isArray(session.work_logs) ? session.work_logs : []).map(
+            (log: unknown) => {
+                const l = log as Record<string, unknown>;
             // Handle nested tickets data (could be object or array)
             let ticketTitle: string | undefined;
-            if (log.tickets) {
-                if (Array.isArray(log.tickets) && log.tickets.length > 0) {
-                    ticketTitle = log.tickets[0].title;
-                } else if (typeof log.tickets === "object" && "title" in log.tickets) {
-                    ticketTitle = log.tickets.title;
+            const tickets = l.tickets as unknown;
+            if (tickets) {
+                if (Array.isArray(tickets) && tickets.length > 0) {
+                    const t0 = tickets[0] as Record<string, unknown>;
+                    ticketTitle = typeof t0.title === "string" ? t0.title : undefined;
+                } else if (typeof tickets === "object" && tickets !== null && "title" in tickets) {
+                    const tObj = tickets as Record<string, unknown>;
+                    ticketTitle = typeof tObj.title === "string" ? tObj.title : undefined;
                 }
             }
 
             return {
-                id: log.id,
-                ticketId: log.ticket_id,
-                userId: log.user_id,
-                startTime: new Date(log.start_time),
-                endTime: log.end_time ? new Date(log.end_time) : new Date(),
-                duration: log.duration || 0,
-                description: log.description || undefined,
+                id: String(l.id),
+                ticketId: String(l.ticket_id),
+                userId: String(l.user_id),
+                startTime: new Date(String(l.start_time)),
+                endTime: l.end_time ? new Date(String(l.end_time)) : new Date(),
+                duration: typeof l.duration === "number" ? l.duration : 0,
+                description: typeof l.description === "string" ? l.description : undefined,
                 ticketTitle,
             };
-        }),
+            },
+        ),
     };
 }

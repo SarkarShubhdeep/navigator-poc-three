@@ -124,7 +124,7 @@ export type UseTimerReturn = {
  * Root container for timer components
  */
 export const TimerRoot = React.forwardRef<HTMLDivElement, TimerRootProps>(
-  ({ variant, size, loading, className, children, ...props }, ref) => {
+  ({ variant, size, className, children, ...props }, ref) => {
     return (
       <div
         ref={ref}

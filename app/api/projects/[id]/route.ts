@@ -97,7 +97,8 @@ export async function GET(
 
         // If no members found and user is the project creator, add them as a fallback
         // This ensures the frontend always has at least one member to assign tickets to
-        let finalMembers: any[] = projectMembers || [];
+        let finalMembers: Array<{ user_id: string; [key: string]: unknown }> =
+            (projectMembers as Array<{ user_id: string; [key: string]: unknown }>) || [];
         if (finalMembers.length === 0 && project.created_by === user.id) {
             // Get user email from auth
             const userEmail = user.email || user.user_metadata?.email || "";

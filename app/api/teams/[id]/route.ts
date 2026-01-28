@@ -18,7 +18,7 @@ export async function GET(
         }
 
         // Verify user is a member of the team (optional check if RLS is disabled)
-        const { data: teamMember, error: memberError } = await supabase
+        const { error: memberError } = await supabase
             .from("team_members")
             .select("team_id")
             .eq("team_id", teamId)

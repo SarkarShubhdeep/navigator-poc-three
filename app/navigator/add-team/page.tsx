@@ -1,9 +1,7 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Plus, Users } from "lucide-react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 export default function AddTeamPage() {

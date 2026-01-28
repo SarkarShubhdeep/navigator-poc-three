@@ -25,7 +25,7 @@ interface UserFooterProps {
 }
 
 export function UserFooter({ onUserUpdate }: UserFooterProps) {
-  const { theme, setTheme } = useTheme();
+  const { setTheme } = useTheme();
   const router = useRouter();
   const [mounted, setMounted] = useState(false);
   const [user, setUser] = useState<{

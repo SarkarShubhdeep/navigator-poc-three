@@ -52,7 +52,6 @@ export function TicketItem({
     assignedMember,
     currentUserId,
     onTicketClick,
-    onStatusChange,
     onStartTicket,
     onPauseTicket,
     activeTicketId,

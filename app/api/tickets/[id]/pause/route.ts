@@ -25,7 +25,7 @@ export async function POST(
         // Find the most recent active work log for this ticket by this user
         // Active work logs have end_time = NULL OR end_time = start_time (legacy case)
         // We'll check for NULL first, then fall back to checking if end_time equals start_time
-        let { data: workLogs, error: workLogsError } = await supabase
+        const { data: workLogs, error: workLogsError } = await supabase
             .from("work_logs")
             .select("*")
             .eq("ticket_id", ticketId)
@@ -35,7 +35,8 @@ export async function POST(
             .limit(1);
 
         // If no NULL end_time found, check for legacy case where end_time = start_time
-        if ((!workLogs || workLogs.length === 0) && !workLogsError) {
+        let resolvedWorkLogs = workLogs;
+        if ((!resolvedWorkLogs || resolvedWorkLogs.length === 0) && !workLogsError) {
             const { data: allWorkLogs } = await supabase
                 .from("work_logs")
                 .select("*")
@@ -46,7 +47,7 @@ export async function POST(
 
             if (allWorkLogs && allWorkLogs.length > 0) {
                 // Find one where end_time equals start_time (legacy active work log)
-                workLogs = allWorkLogs.filter(
+                resolvedWorkLogs = allWorkLogs.filter(
                     (log) => log.end_time && log.start_time && 
                     new Date(log.end_time).getTime() === new Date(log.start_time).getTime()
                 ).slice(0, 1);
@@ -61,14 +62,14 @@ export async function POST(
             );
         }
 
-        if (!workLogs || workLogs.length === 0) {
+        if (!resolvedWorkLogs || resolvedWorkLogs.length === 0) {
             return NextResponse.json(
                 { error: "No active work log found for this ticket" },
                 { status: 404 },
             );
         }
 
-        const workLog = workLogs[0];
+        const workLog = resolvedWorkLogs[0];
         const endTime = new Date();
         const startTime = new Date(workLog.start_time);
         

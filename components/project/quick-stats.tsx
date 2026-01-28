@@ -1,6 +1,4 @@
 "use client";
-
-import { formatDurationHuman } from "@/lib/utils/time";
 import type { Ticket } from "@/lib/mock-data/project";
 import { useEffect, useState } from "react";
 

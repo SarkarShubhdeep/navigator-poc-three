@@ -216,7 +216,7 @@ export default function TimelinePage() {
     );
     const [calendarOpen, setCalendarOpen] = useState(false);
     const [viewType, setViewType] = useState<ViewType>("week");
-    const [viewDate, setViewDate] = useState<Date>(new Date());
+    const [viewDate, setViewDate] = useState<Date | null>(null);
 
     const supabase = createClient();
 
@@ -249,8 +249,13 @@ export default function TimelinePage() {
 
     // Initialize date range on client side only
     useEffect(() => {
+        // Avoid `new Date()` during prerender: initialize on client
+        const today = new Date();
+        if (!viewDate) {
+            setViewDate(today);
+        }
         if (!dateRange) {
-            const range = calculateDateRange(viewType, viewDate);
+            const range = calculateDateRange(viewType, viewDate ?? today);
             setDateRange(range);
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -267,22 +272,22 @@ export default function TimelinePage() {
     // Navigate to previous period
     const handlePrevious = useCallback(() => {
         if (viewType === "day") {
-            setViewDate((prev) => subDays(prev, 1));
+            setViewDate((prev) => subDays(prev ?? new Date(), 1));
         } else if (viewType === "week") {
-            setViewDate((prev) => subWeeks(prev, 1));
+            setViewDate((prev) => subWeeks(prev ?? new Date(), 1));
         } else if (viewType === "month") {
-            setViewDate((prev) => subMonths(prev, 1));
+            setViewDate((prev) => subMonths(prev ?? new Date(), 1));
         }
     }, [viewType]);
 
     // Navigate to next period
     const handleNext = useCallback(() => {
         if (viewType === "day") {
-            setViewDate((prev) => addDays(prev, 1));
+            setViewDate((prev) => addDays(prev ?? new Date(), 1));
         } else if (viewType === "week") {
-            setViewDate((prev) => addWeeks(prev, 1));
+            setViewDate((prev) => addWeeks(prev ?? new Date(), 1));
         } else if (viewType === "month") {
-            setViewDate((prev) => addMonths(prev, 1));
+            setViewDate((prev) => addMonths(prev ?? new Date(), 1));
         }
     }, [viewType]);
 

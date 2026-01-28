@@ -33,7 +33,7 @@ export default function CreateTeamPage() {
                 throw new Error(data.error || "Failed to create team");
             }
 
-            const data = await response.json();
+            await response.json();
             // Redirect to personal page (teams list will show the new team)
             // The sidebar will automatically refresh teams
             router.push("/navigator/personal");

@@ -17,6 +17,7 @@ import {
     TooltipContent,
     TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 
 interface GanttTask {
     id: string;
@@ -62,8 +63,9 @@ function formatDuration(seconds: number): string {
 
 export function GanttChart({ tasks, dateRange, viewType }: GanttChartProps) {
     const [zoom, setZoom] = useState(1);
-    const scrollContainerRef = useRef<HTMLDivElement>(null);
-    const timelineRefs = useRef<(HTMLDivElement | null)[]>([]);
+    const scrollViewportRef = useRef<HTMLDivElement | null>(null);
+    const headerScrollRef = useRef<HTMLDivElement>(null);
+    const containerRef = useRef<HTMLDivElement>(null);
 
     const isDayView = viewType === "day";
 
@@ -106,37 +108,56 @@ export function GanttChart({ tasks, dateRange, viewType }: GanttChartProps) {
         [],
     );
 
-    useEffect(() => {
-        const container = scrollContainerRef.current;
-        if (container) {
-            container.addEventListener("wheel", handleWheel, { passive: false });
-            return () => {
-                container.removeEventListener("wheel", handleWheel);
-            };
-        }
-    }, [handleWheel]);
-
     // Handle horizontal scroll synchronization
     const handleHeaderScroll = useCallback((e: React.UIEvent<HTMLDivElement>) => {
         const scrollLeft = e.currentTarget.scrollLeft;
-        timelineRefs.current.forEach((ref) => {
-            if (ref) {
-                ref.scrollLeft = scrollLeft;
-            }
-        });
+        // Sync scroll viewport
+        if (scrollViewportRef.current) {
+            scrollViewportRef.current.scrollLeft = scrollLeft;
+        }
     }, []);
 
-    const handleTimelineScroll = useCallback((e: React.UIEvent<HTMLDivElement>) => {
-        const scrollLeft = e.currentTarget.scrollLeft;
-        if (scrollContainerRef.current) {
-            scrollContainerRef.current.scrollLeft = scrollLeft;
-        }
-        timelineRefs.current.forEach((ref) => {
-            if (ref && ref !== e.currentTarget) {
-                ref.scrollLeft = scrollLeft;
+    // Find and sync ScrollArea viewport after render
+    useEffect(() => {
+        let viewport: HTMLDivElement | null = null;
+        let cleanup: (() => void) | null = null;
+        
+        const findAndSetupViewport = () => {
+            if (!containerRef.current) return;
+            
+            // Find the ScrollArea viewport within this component's container
+            viewport = containerRef.current.querySelector('[data-slot="scroll-area-viewport"]') as HTMLDivElement;
+            
+            if (viewport && scrollViewportRef.current !== viewport) {
+                scrollViewportRef.current = viewport;
+                
+                const handleViewportScroll = () => {
+                    if (viewport && headerScrollRef.current) {
+                        headerScrollRef.current.scrollLeft = viewport.scrollLeft;
+                    }
+                };
+                
+                viewport.addEventListener("scroll", handleViewportScroll);
+                viewport.addEventListener("wheel", handleWheel, { passive: false });
+                
+                cleanup = () => {
+                    viewport?.removeEventListener("scroll", handleViewportScroll);
+                    viewport?.removeEventListener("wheel", handleWheel);
+                };
             }
-        });
-    }, []);
+        };
+        
+        // Try immediately
+        findAndSetupViewport();
+        
+        // Also try after a short delay in case ScrollArea hasn't rendered yet
+        const timeout = setTimeout(findAndSetupViewport, 100);
+        
+        return () => {
+            clearTimeout(timeout);
+            cleanup?.();
+        };
+    }, [handleWheel]);
 
     // Calculate task positions and widths
     const taskData = useMemo(() => {
@@ -199,19 +220,20 @@ export function GanttChart({ tasks, dateRange, viewType }: GanttChartProps) {
     const totalWidth = totalUnits * unitWidth;
 
     return (
-        <div className="flex flex-col h-full overflow-hidden">
+        <div ref={containerRef} className="flex flex-col h-full overflow-hidden">
             {/* Header with dates */}
-            <div className="sticky top-0 z-10 bg-background border-b">
+            <div className="sticky top-0 z-10 bg-background border-b flex-shrink-0">
                 <div className="flex">
                     {/* Task name column */}
                     <div className="w-64 flex-shrink-0 border-r p-2 font-medium text-sm">
                         Task name
                     </div>
-                    {/* Timeline header - scrollable */}
+                    {/* Timeline header - synchronized scroll */}
                     <div
-                        ref={scrollContainerRef}
+                        ref={headerScrollRef}
                         className="flex-1 overflow-x-auto overflow-y-hidden"
                         onScroll={handleHeaderScroll}
+                        style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
                     >
                         <div
                             className="relative h-10"
@@ -267,73 +289,65 @@ export function GanttChart({ tasks, dateRange, viewType }: GanttChartProps) {
                 </div>
             </div>
 
-            {/* Tasks */}
-            <div className="flex-1 overflow-y-auto overflow-x-hidden">
-                {taskData.map((task, index) => (
-                    <div
-                        key={task.id}
-                        className={cn(
-                            "flex border-b border-border hover:bg-muted/50 transition-colors",
-                            index % 2 === 0 && "bg-muted/20",
-                        )}
-                    >
-                        {/* Task name */}
-                        <div className="w-64 flex-shrink-0 border-r p-3 flex items-center">
-                            <div className="truncate text-sm">{task.text}</div>
-                        </div>
-
-                        {/* Timeline bar - scrollable */}
+            {/* Combined horizontal scroll area for tasks */}
+            <ScrollArea className="flex-1">
+                <div style={{ width: `${totalWidth + 256}px`, minHeight: '100%' }}>
+                    {taskData.map((task, index) => (
                         <div
-                            ref={(el) => {
-                                timelineRefs.current[index] = el;
-                            }}
-                            className="flex-1 relative h-12 overflow-x-auto overflow-y-hidden"
-                            onScroll={handleTimelineScroll}
+                            key={task.id}
+                            className={cn(
+                                "flex border-b border-border hover:bg-muted/50 transition-colors",
+                                index % 2 === 0 && "bg-muted/20",
+                            )}
                         >
-                            <div
-                                className="absolute inset-0"
-                                style={{ width: `${totalWidth}px` }}
-                            >
-                                {/* Grid lines */}
-                                {timeUnits.map((unit, unitIndex) => (
-                                    <div
-                                        key={unit.toISOString()}
-                                        className="absolute border-r border-border"
-                                        style={{
-                                            left: `${unitIndex * unitWidth}px`,
-                                            width: `${unitWidth}px`,
-                                            height: "100%",
-                                        }}
-                                    />
-                                ))}
+                            {/* Task name */}
+                            <div className="w-64 flex-shrink-0 border-r p-3 flex items-center">
+                                <div className="truncate text-sm">{task.text}</div>
+                            </div>
 
-                                {/* Task bar */}
-                                {task.leftPx < totalWidth &&
-                                    task.leftPx + task.widthPx > 0 && (
-                                        <Tooltip delayDuration={0}>
-                                            <TooltipTrigger asChild>
-                                                <div
-                                                    className={cn(
-                                                        "absolute top-2 bottom-2 rounded-md",
-                                                        "bg-primary text-primary-foreground",
-                                                        "flex items-center justify-center",
-                                                        "text-xs font-medium px-2",
-                                                        "shadow-sm border border-primary/20",
-                                                        "hover:bg-primary/90 transition-colors",
-                                                        "cursor-pointer",
-                                                    )}
-                                                    style={{
-                                                        left: `${task.leftPx}px`,
-                                                        width: `${task.widthPx}px`,
-                                                    }}
-                                                >
-                                                    {task.widthPx > 80 && (
-                                                        <span className="truncate">
-                                                            {task.text}
-                                                        </span>
-                                                    )}
-                                                </div>
-                                            </TooltipTrigger>
+                            {/* Timeline bar - no individual scrolling */}
+                            <div className="relative h-12" style={{ width: `${totalWidth}px` }}>
+                                <div className="absolute inset-0">
+                                    {/* Grid lines */}
+                                    {timeUnits.map((unit, unitIndex) => (
+                                        <div
+                                            key={unit.toISOString()}
+                                            className="absolute border-r border-border"
+                                            style={{
+                                                left: `${unitIndex * unitWidth}px`,
+                                                width: `${unitWidth}px`,
+                                                height: "100%",
+                                            }}
+                                        />
+                                    ))}
+
+                                    {/* Task bar */}
+                                    {task.leftPx < totalWidth &&
+                                        task.leftPx + task.widthPx > 0 && (
+                                            <Tooltip delayDuration={0}>
+                                                <TooltipTrigger asChild>
+                                                    <div
+                                                        className={cn(
+                                                            "absolute top-2 bottom-2 rounded-md",
+                                                            "bg-primary text-primary-foreground",
+                                                            "flex items-center justify-center",
+                                                            "text-xs font-medium px-2",
+                                                            "shadow-sm border border-primary/20",
+                                                            "hover:bg-primary/90 transition-colors",
+                                                            "cursor-pointer",
+                                                        )}
+                                                        style={{
+                                                            left: `${task.leftPx}px`,
+                                                            width: `${task.widthPx}px`,
+                                                        }}
+                                                    >
+                                                        {task.widthPx > 80 && (
+                                                            <span className="truncate">
+                                                                {task.text}
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                </TooltipTrigger>
                                         <TooltipContent
                                             side="top"
                                             className="max-w-xs"
@@ -390,13 +404,15 @@ export function GanttChart({ tasks, dateRange, viewType }: GanttChartProps) {
                                         </TooltipContent>
                                     </Tooltip>
                                 )}
+                                </div>
                             </div>
                         </div>
-                    </div>
-                ))}
-            </div>
+                    ))}
+                </div>
+                <ScrollBar orientation="horizontal" />
+            </ScrollArea>
             {/* Zoom hint */}
-            <div className="px-4 py-2 text-xs text-muted-foreground border-t bg-muted/30">
+            <div className="px-4 py-2 text-xs text-muted-foreground border-t bg-muted/30 flex-shrink-0">
                 Use Ctrl/Cmd + Scroll to zoom • Scroll horizontally to navigate
             </div>
         </div>
