@@ -37,7 +37,7 @@ export function TimeSpentChart({ data, className }: TimeSpentChartProps) {
     }, [data]);
 
     return (
-        <Card className={cn(className)}>
+        <Card className={cn("border border-muted rounded-xl bg-muted/50", className)}>
             <CardHeader>
                 <CardTitle>Time Spent Over Time</CardTitle>
             </CardHeader>

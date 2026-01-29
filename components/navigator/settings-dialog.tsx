@@ -11,8 +11,16 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
+import { Badge } from "@/components/ui/badge";
+import { Card } from "@/components/ui/card";
 import { createClient } from "@/lib/supabase/client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
+import { Search, Check } from "lucide-react";
+import { useTheme } from "next-themes";
+import Image from "next/image";
+import { developerApps, type DeveloperApp } from "@/lib/data/developer-apps";
+import { cn } from "@/lib/utils";
 
 interface SettingsDialogProps {
     open: boolean;
@@ -32,6 +40,12 @@ export function SettingsDialog({
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState<string | null>(null);
+
+    // App tracking state
+    const [selectedAppIds, setSelectedAppIds] = useState<Set<string>>(
+        new Set(),
+    );
+    const [searchQuery, setSearchQuery] = useState("");
 
     useEffect(() => {
         if (open) {
@@ -162,7 +176,7 @@ export function SettingsDialog({
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="max-w-4xl min-h-[600px] overflow-hidden flex flex-col rounded-2xl border-none">
+            <DialogContent className="max-w-4xl h-[800px] overflow-hidden flex flex-col rounded-2xl  w-full dark:border">
                 <DialogHeader>
                     <DialogTitle>Settings</DialogTitle>
                     <DialogDescription>
@@ -172,7 +186,7 @@ export function SettingsDialog({
 
                 <Tabs
                     defaultValue="general"
-                    className="flex-1 flex gap-6 overflow-hidden"
+                    className="flex-1 flex gap-6 overflow-hidden min-w-0"
                 >
                     <TabsList className="flex flex-col h-auto w-48 justify-start bg-muted/50 p-2">
                         <TabsTrigger
@@ -195,14 +209,20 @@ export function SettingsDialog({
                         </TabsTrigger>
                     </TabsList>
 
-                    <div className="flex-1 overflow-y-auto">
-                        <TabsContent value="general" className="space-y-4 mt-0">
+                    <div className="flex-1 overflow-hidden flex flex-col min-h-0 min-w-0 h-full">
+                        <TabsContent
+                            value="general"
+                            className="space-y-4 mt-0 h-full overflow-y-auto"
+                        >
                             <p className="text-sm text-muted-foreground">
                                 General settings coming soon.
                             </p>
                         </TabsContent>
 
-                        <TabsContent value="account" className="space-y-4 mt-0">
+                        <TabsContent
+                            value="account"
+                            className="space-y-4 mt-0 h-full overflow-y-auto"
+                        >
                             <div className="space-y-4">
                                 <div className="space-y-2">
                                     <Label htmlFor="full-name">Full Name</Label>
@@ -288,15 +308,199 @@ export function SettingsDialog({
 
                         <TabsContent
                             value="tracking"
-                            className="space-y-4 mt-0"
+                            className="mt-0 flex flex-col h-full min-h-0 min-w-0 overflow-hidden"
                         >
-                            <p className="text-sm text-muted-foreground">
-                                App tracking settings coming soon.
-                            </p>
+                            <AppTrackingTab
+                                selectedAppIds={selectedAppIds}
+                                onSelectionChange={setSelectedAppIds}
+                                searchQuery={searchQuery}
+                                onSearchChange={setSearchQuery}
+                            />
                         </TabsContent>
                     </div>
                 </Tabs>
             </DialogContent>
         </Dialog>
+    );
+}
+
+// App Tracking Tab Component
+interface AppTrackingTabProps {
+    selectedAppIds: Set<string>;
+    onSelectionChange: (ids: Set<string>) => void;
+    searchQuery: string;
+    onSearchChange: (query: string) => void;
+}
+
+function AppTrackingTab({
+    selectedAppIds,
+    onSelectionChange,
+    searchQuery,
+    onSearchChange,
+}: AppTrackingTabProps) {
+    // Filter apps based on search query
+    const filteredApps = useMemo(() => {
+        if (!searchQuery.trim()) {
+            return developerApps;
+        }
+        const query = searchQuery.toLowerCase();
+        return developerApps.filter(
+            (app) =>
+                app.name.toLowerCase().includes(query) ||
+                app.category.toLowerCase().includes(query),
+        );
+    }, [searchQuery]);
+
+    // Separate selected and available apps
+    const selectedApps = useMemo(
+        () => filteredApps.filter((app) => selectedAppIds.has(app.id)),
+        [filteredApps, selectedAppIds],
+    );
+
+    const availableApps = useMemo(
+        () => filteredApps.filter((app) => !selectedAppIds.has(app.id)),
+        [filteredApps, selectedAppIds],
+    );
+
+    const handleAppToggle = (appId: string) => {
+        const newSelection = new Set(selectedAppIds);
+        if (newSelection.has(appId)) {
+            newSelection.delete(appId);
+        } else {
+            newSelection.add(appId);
+        }
+        onSelectionChange(newSelection);
+    };
+
+    return (
+        <div className="flex flex-col h-full gap-4 min-h-0 overflow-hidden max-h-full">
+            {/* Search Bar */}
+            <div className="relative flex-shrink-0">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                    placeholder="Search applications..."
+                    value={searchQuery}
+                    onChange={(e) => onSearchChange(e.target.value)}
+                    className="pl-9"
+                />
+            </div>
+
+            {/* Selected Apps Section */}
+            <div className="flex flex-col flex-[0_0_45%] min-h-0 max-h-[45%] gap-2 overflow-hidden">
+                <div className="flex items-center gap-2 flex-shrink-0">
+                    <h3 className="text-sm font-semibold">Selected Apps</h3>
+                    <Badge variant="secondary" className="text-xs">
+                        {selectedApps.length}
+                    </Badge>
+                </div>
+                <ScrollArea className="flex-1 min-h-0 max-h-full border rounded-lg w-full">
+                    <div className="w-full">
+                        {selectedApps.length > 0 ? (
+                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 p-4 w-full">
+                                {selectedApps.map((app) => (
+                                    <AppCard
+                                        key={app.id}
+                                        app={app}
+                                        isSelected={true}
+                                        onToggle={handleAppToggle}
+                                    />
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="flex items-center justify-center min-h-[120px] text-sm text-muted-foreground">
+                                No apps selected. Select apps from the list
+                                below to track.
+                            </div>
+                        )}
+                    </div>
+                    <ScrollBar orientation="vertical" />
+                </ScrollArea>
+            </div>
+
+            {/* Available Apps Section */}
+            <div className="flex flex-col mt-2 flex-1 min-h-0 gap-2 overflow-hidden">
+                <div className="flex items-center gap-2 flex-shrink-0">
+                    <h3 className="text-sm font-semibold">Available Apps</h3>
+                    <Badge
+                        variant="secondary"
+                        className="text-xs whitespace-nowrap"
+                    >
+                        {availableApps.length}
+                    </Badge>
+                </div>
+                <ScrollArea className="flex-1 min-h-0 max-h-full border rounded-lg w-full">
+                    <div className="w-full">
+                        {availableApps.length > 0 ? (
+                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 p-4 w-full">
+                                {availableApps.map((app) => (
+                                    <AppCard
+                                        key={app.id}
+                                        app={app}
+                                        isSelected={false}
+                                        onToggle={handleAppToggle}
+                                    />
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="flex items-center justify-center min-h-[120px] text-sm text-muted-foreground">
+                                {searchQuery
+                                    ? "No apps found matching your search."
+                                    : "All apps are selected."}
+                            </div>
+                        )}
+                    </div>
+                    <ScrollBar orientation="vertical" />
+                </ScrollArea>
+            </div>
+        </div>
+    );
+}
+
+// App Card Component
+interface AppCardProps {
+    app: DeveloperApp;
+    isSelected: boolean;
+    onToggle: (appId: string) => void;
+}
+
+function AppCard({ app, isSelected, onToggle }: AppCardProps) {
+    const { resolvedTheme } = useTheme();
+    const appIconSrc =
+        resolvedTheme === "dark"
+            ? "/assets/app-icon-dark.svg"
+            : "/assets/app-icon-light.svg";
+
+    return (
+        <Card
+            className={cn(
+                "p-3 cursor-pointer transition-all hover:border-primary/50 hover:shadow-sm w-full min-w-0 border-none",
+                isSelected && "",
+            )}
+            onClick={() => onToggle(app.id)}
+        >
+            <div className="flex flex-col items-center gap-2 w-full min-w-0">
+                <div className="relative flex-shrink-0">
+                    <div className="w-12 h-12 flex items-center justify-center overflow-hidden">
+                        <Image
+                            src={appIconSrc}
+                            alt=""
+                            width={48}
+                            height={48}
+                            className="object-contain border rounded-xl"
+                        />
+                    </div>
+                    {isSelected && (
+                        <div className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-primary flex items-center justify-center">
+                            <Check className="h-3 w-3 text-primary-foreground" />
+                        </div>
+                    )}
+                </div>
+                <div className="text-center w-full min-w-0">
+                    <p className="text-xs font-medium truncate w-full">
+                        {app.name}
+                    </p>
+                </div>
+            </div>
+        </Card>
     );
 }

@@ -49,7 +49,7 @@ export function SummaryCards({ stats, className }: SummaryCardsProps) {
     return (
         <div className={className ?? "grid grid-cols-2 gap-4"}>
             {cards.map((card) => (
-                <Card key={card.title} className="h-full">
+                <Card key={card.title} className="h-full border border-muted rounded-xl bg-muted/50">
                     <CardHeader className="pb-2">
                         <CardTitle className="text-sm font-medium text-muted-foreground">
                             {card.title}

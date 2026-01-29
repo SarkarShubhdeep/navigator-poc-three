@@ -39,7 +39,7 @@ export function DayOfWeekChart({ data, className }: DayOfWeekChartProps) {
     }, [data]);
 
     return (
-        <Card className={cn(className)}>
+        <Card className={cn("border border-muted rounded-xl bg-muted/50", className)}>
             <CardHeader>
                 <CardTitle>Work Distribution by Day of Week</CardTitle>
             </CardHeader>
@@ -74,7 +74,6 @@ export function DayOfWeekChart({ data, className }: DayOfWeekChartProps) {
                             <Bar
                                 dataKey="avgHours"
                                 fill="hsl(var(--foreground))"
-                                radius={[6, 6, 0, 0]}
                                 fillOpacity={0.75}
                                 isAnimationActive={false}
                             />

@@ -38,7 +38,7 @@ export function TicketsCompletedChart({ data, className }: TicketsCompletedChart
     }, [data]);
 
     return (
-        <Card className={cn(className)}>
+        <Card className={cn("border border-muted rounded-xl bg-muted/50", className)}>
             <CardHeader>
                 <CardTitle>Tickets Completed</CardTitle>
             </CardHeader>
@@ -68,7 +68,7 @@ export function TicketsCompletedChart({ data, className }: TicketsCompletedChart
                                 }}
                                 labelStyle={{ color: "hsl(var(--muted-foreground))" }}
                             />
-                            <Bar dataKey="tickets" fill="hsl(var(--foreground))" fillOpacity={0.75} radius={[6, 6, 0, 0]} />
+                            <Bar dataKey="tickets" fill="hsl(var(--foreground))" fillOpacity={0.75} />
                         </BarChart>
                     </ResponsiveContainer>
                 </div>

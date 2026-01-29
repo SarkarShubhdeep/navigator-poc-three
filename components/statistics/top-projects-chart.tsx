@@ -37,7 +37,7 @@ export function TopProjectsChart({ data, className }: TopProjectsChartProps) {
     }, [data]);
 
     return (
-        <Card className={cn(className)}>
+        <Card className={cn("border border-muted rounded-xl bg-muted/50", className)}>
             <CardHeader>
                 <CardTitle>Top Projects by Time</CardTitle>
             </CardHeader>
@@ -75,7 +75,7 @@ export function TopProjectsChart({ data, className }: TopProjectsChartProps) {
                                 labelStyle={{ color: "hsl(var(--muted-foreground))" }}
                                 formatter={(value) => [`${Number(value).toFixed(1)}h`, "Hours"]}
                             />
-                            <Bar dataKey="hours" fill="hsl(var(--foreground))" fillOpacity={0.75} radius={[6, 6, 6, 6]} />
+                            <Bar dataKey="hours" fill="hsl(var(--foreground))" fillOpacity={0.75} />
                         </BarChart>
                     </ResponsiveContainer>
                 </div>

@@ -17,6 +17,7 @@ import { ActivityHeatmap } from "@/components/statistics/activity-heatmap";
 import { TimeSpentChart } from "@/components/statistics/time-spent-chart";
 import { TicketsCompletedChart } from "@/components/statistics/tickets-completed-chart";
 import { TopProjectsChart } from "@/components/statistics/top-projects-chart";
+import { TopApplicationsChart } from "@/components/statistics/top-applications-chart";
 import { DayOfWeekChart } from "@/components/statistics/day-of-week-chart";
 
 interface StatisticsData {
@@ -188,53 +189,7 @@ export default function StatisticsPage() {
                         endDate={statistics.dateRange.end}
                     />
 
-                    <div className="h-full rounded-xl border bg-card p-6">
-                        <div className="text-sm font-medium text-muted-foreground">
-                            Highlights
-                        </div>
-                        <div className="mt-4 space-y-3">
-                            <div className="flex items-baseline justify-between gap-4">
-                                <div className="text-sm text-muted-foreground">
-                                    Top project
-                                </div>
-                                <div className="text-sm font-medium text-right">
-                                    {statistics.topProjects?.[0]?.projectName ??
-                                        "—"}
-                                </div>
-                            </div>
-                            <div className="flex items-baseline justify-between gap-4">
-                                <div className="text-sm text-muted-foreground">
-                                    Top project hours
-                                </div>
-                                <div className="text-sm font-medium">
-                                    {statistics.topProjects?.[0]?.totalHours
-                                        ? `${statistics.topProjects[0].totalHours.toFixed(1)}h`
-                                        : "—"}
-                                </div>
-                            </div>
-                            <div className="flex items-baseline justify-between gap-4">
-                                <div className="text-sm text-muted-foreground">
-                                    Most active weekday
-                                </div>
-                                <div className="text-sm font-medium">
-                                    {(() => {
-                                        const best =
-                                            statistics.dayOfWeekStats?.reduce(
-                                                (acc, cur) =>
-                                                    cur.totalHours >
-                                                    (acc?.totalHours ?? -1)
-                                                        ? cur
-                                                        : acc,
-                                                undefined as
-                                                    | (typeof statistics.dayOfWeekStats)[number]
-                                                    | undefined,
-                                            );
-                                        return best?.day ?? "—";
-                                    })()}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                    <TopApplicationsChart className="h-full" />
                 </div>
 
                 {/* Charts Grid */}

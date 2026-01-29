@@ -176,7 +176,7 @@ export function LiveClock({ projectId, onWorkSessionChange }: LiveClockProps) {
                 <Button
                     onClick={handleClockIn}
                     disabled={loading}
-                    className="bg-black text-white hover:bg-black/90 rounded-full h-16 px-8 font-semibold w-fit dark:bg-white dark:text-black dark:hover:bg-white/90"
+                    className="bg-black text-white hover:bg-black/90 rounded-full h-16 px-16 font-semibold w-fit dark:bg-white dark:text-black dark:hover:bg-white/90"
                 >
                     Start your work session
                     <Play className="h-4 w-4" />

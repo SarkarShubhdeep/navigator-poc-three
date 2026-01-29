@@ -102,7 +102,7 @@ export function ActivityHeatmap({
     const weeksCount = Math.ceil(days.length / 7);
 
     return (
-        <Card className={cn(className)}>
+        <Card className={cn("border border-muted rounded-xl bg-muted/50", className)}>
             <CardHeader className="flex-shrink-0">
                 <CardTitle>Activity Heatmap</CardTitle>
             </CardHeader>
