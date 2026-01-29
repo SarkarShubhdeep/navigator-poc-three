@@ -22,9 +22,8 @@ function WorkSessionsContent() {
                     throw new Error("Failed to fetch work sessions");
                 }
                 const data = await response.json();
-                const transformedSessions = data.workSessions.map(
-                    transformWorkSession,
-                );
+                const transformedSessions =
+                    data.workSessions.map(transformWorkSession);
                 setWorkSessions(transformedSessions);
             } catch (error) {
                 console.error("Error fetching work sessions:", error);
@@ -44,13 +43,15 @@ function WorkSessionsContent() {
     if (loading) {
         return (
             <div className="p-8 pt-0 flex items-center justify-center h-full">
-                <p className="text-muted-foreground">Loading work sessions...</p>
+                <p className="text-muted-foreground">
+                    Loading work sessions...
+                </p>
             </div>
         );
     }
 
     return (
-        <div className="p-8 pt-0 space-y-6">
+        <div className="p-8 pt-0 space-y-6 max-w-5xl mx-auto">
             <WorkSessionsSection
                 workSessions={workSessions}
                 onSessionClick={handleSessionClick}
